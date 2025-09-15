@@ -7,6 +7,8 @@ cd /root/antizapret
 
 source setup
 
+
+
 if [[ -z "$DEFAULT_INTERFACE" ]]; then
 	DEFAULT_INTERFACE=$(ip route get 1.2.3.4 | awk '{print $5; exit}')
 fi
@@ -24,6 +26,13 @@ if [[ -z "$DEFAULT_IP" ]]; then
 fi
 
 [[ "$ALTERNATIVE_IP" == "y" ]] && IP="172" || IP="10"
+#
+# Create dummy interface for internal DNS
+ip link add dummy0 type dummy || true
+ip addr add ${IP}.29.0.1/22 dev dummy0 || true
+ip addr add ${IP}.29.4.1/22 dev dummy0 || true
+ip addr add ${IP}.29.8.1/24 dev dummy0 || true
+ip link set dummy0 up || true
 
 # Clear knot-resolver cache
 count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)
