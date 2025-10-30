@@ -194,11 +194,16 @@ ufw disable &>/dev/null
 systemctl disable firewalld &>/dev/null
 systemctl disable ufw &>/dev/null
 
+systemctl stop apparmor &>/dev/null
+systemctl disable apparmor &>/dev/null
+
+systemctl stop apport &>/dev/null
+systemctl disable apport &>/dev/null
+
 #
 # Удаляем старые файлы и кеш Knot Resolver
 rm -rf /var/cache/knot-resolver/*
 rm -rf /etc/knot-resolver/*
-rm -rf /var/lib/knot-resolver/*
 
 #
 # Отключим IPv6
@@ -237,10 +242,9 @@ mkdir -p /etc/apt/keyrings
 
 #
 # Добавим репозиторий Knot Resolver
-curl -fsSL https://pkg.labs.nic.cz/gpg -o /etc/apt/keyrings/cznic-labs-pkg.gpg
+curl -4fsSL https://pkg.labs.nic.cz/gpg -o /etc/apt/keyrings/cznic-labs-pkg.gpg
 echo "deb [signed-by=/etc/apt/keyrings/cznic-labs-pkg.gpg] https://pkg.labs.nic.cz/knot-resolver $(lsb_release -cs) main" > /etc/apt/sources.list.d/cznic-labs-knot-resolver.list
 
-#
 #
 # Добавим репозиторий Debian Backports
 if [[ "$OS" == "debian" ]]; then
@@ -296,7 +300,8 @@ OVH_INCLUDE=${OVH_INCLUDE}
 GOOGLE_INCLUDE=${GOOGLE_INCLUDE}
 AKAMAI_INCLUDE=${AKAMAI_INCLUDE}
 DEFAULT_INTERFACE=
-DEFAULT_IP=" > /tmp/antizapret/setup/root/antizapret/setup
+DEFAULT_IP=
+CLEAR_HOSTS=y" > /tmp/antizapret/setup/root/antizapret/setup
 
 #
 # Выставляем разрешения

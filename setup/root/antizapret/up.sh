@@ -38,12 +38,6 @@ ip link set dummy0 up || true
 count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)
 echo "DNS cache cleared: $count entries"
 
-# Network parameters modification
-sysctl -w net.ipv4.ip_forward=1
-sysctl -w kernel.printk="3 4 1 3"
-sysctl -w net.core.default_qdisc=fq || true
-sysctl -w net.ipv4.tcp_congestion_control=bbr || true
-
 # filter
 # Default policy
 iptables -w -P INPUT ACCEPT
@@ -64,12 +58,14 @@ ip6tables -w -I OUTPUT 1 -m conntrack --ctstate INVALID -j DROP
 # Torrent guard
 if [[ "$TORRENT_GUARD" == "y" ]]; then
 	ipset create antizapret-torrent hash:ip timeout 60 -exist
-	iptables -I FORWARD 2 -s ${IP}.28.0.0/16 -p tcp -m string --algo kmp --string "info_hash" -m string --algo kmp --string "peer_id" -j SET --add-set antizapret-torrent src --exist
-	iptables -I FORWARD 3 -s ${IP}.28.0.0/16 -p udp -m string --algo kmp --string "info_hash" -m string --algo kmp --string "get_peers" -j SET --add-set antizapret-torrent src --exist
-	iptables -I FORWARD 4 -s ${IP}.28.0.0/16 -m set --match-set antizapret-torrent src -j DROP
+	iptables -w -I FORWARD 2 -s ${IP}.28.0.0/16 -p tcp -m string --string "GET " --algo kmp --to 100 -m string --string "info_hash=" --algo bm -m string --string "peer_id=" --algo bm -m string --string "port=" --algo bm -j SET --add-set antizapret-torrent src --exist
+	iptables -w -I FORWARD 3 -s ${IP}.28.0.0/16 -p udp -m string --string "BitTorrent protocol" --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
+	iptables -w -I FORWARD 4 -s ${IP}.28.0.0/16 -p udp -m string --string "d1:ad2:id20:" --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
+	iptables -w -I FORWARD 5 -s ${IP}.28.0.0/16 -m set --match-set antizapret-torrent src -j DROP
 fi
-# Restrict forwarding
+# Client isolation
 iptables -w -I FORWARD 2 ! -i "$DEFAULT_INTERFACE" -d ${IP}.28.0.0/15 -j DROP
+# Restrict forwarding
 if [[ "$RESTRICT_FORWARD" == "y" ]]; then
 	{
 		echo "create antizapret-forward hash:net -exist"
