@@ -187,19 +187,6 @@ systemctl disable antizapret-update &>/dev/null
 systemctl stop antizapret-update.timer &>/dev/null
 systemctl disable antizapret-update.timer &>/dev/null
 
-# Остановим и выключим ненужные службы
-systemctl stop firewalld &>/dev/null
-ufw disable &>/dev/null
-
-systemctl disable firewalld &>/dev/null
-systemctl disable ufw &>/dev/null
-
-systemctl stop apparmor &>/dev/null
-systemctl disable apparmor &>/dev/null
-
-systemctl stop apport &>/dev/null
-systemctl disable apport &>/dev/null
-
 #
 # Удаляем старые файлы и кеш Knot Resolver
 rm -rf /var/cache/knot-resolver/*
