@@ -46,33 +46,6 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 	# Выводим результат
 	echo "$(wc -l < result/route-ips.txt) - route-ips.txt"
 
-	# Создаем файл для OpenVPN и файлы маршрутов для роутеров
-	[[ "$ALTERNATIVE_IP" == "y" ]] && IP_A="172" || IP_A="10"
-	echo -e "route 0.0.0.0 128.0.0.0 net_gateway\nroute 128.0.0.0 128.0.0.0 net_gateway" > result/DEFAULT
-	echo -e "route 0.0.0.0 128.0.0.0 net_gateway\nroute 128.0.0.0 128.0.0.0 net_gateway\nroute ${IP_A}.29.0.0 255.255.248.0\nroute ${IP_A}.30.0.0 255.254.0.0" > result/tp-link-openvpn-routes.txt
-	echo -e "route ADD DNS_IP_1 MASK 255.255.255.255 ${IP_A}.29.8.1\nroute ADD DNS_IP_2 MASK 255.255.255.255 ${IP_A}.29.8.1\nroute ADD ${IP_A}.30.0.0 MASK 255.254.0.0 ${IP_A}.29.8.1" > result/keenetic-wireguard-routes.txt
-	echo "/ip route add dst-address=${IP_A}.30.0.0/15 gateway=${IP_A}.29.8.1 distance=1 comment=\"antizapret-wireguard\"" > result/mikrotik-wireguard-routes.txt
-	while read -r line; do
-		IP="$(echo $line | awk -F '/' '{print $1}')"
-		MASK="$(sipcalc -- $line | awk '/Network mask/ {print $4; exit;}')"
-		echo "push \"route ${IP} ${MASK}\"" >> result/DEFAULT
-		echo "route ${IP} ${MASK}" >> result/tp-link-openvpn-routes.txt
-		echo "route ADD ${IP} MASK ${MASK} ${IP_A}.29.8.1" >> result/keenetic-wireguard-routes.txt
-		echo "/ip route add dst-address=${line} gateway=${IP_A}.29.8.1 distance=1 comment=\"antizapret-wireguard\"" >> result/mikrotik-wireguard-routes.txt
-	done < result/route-ips.txt
-
-	# Обновляем файл DEFAULT в OpenVPN только если файл изменился
-	if [[ -f result/DEFAULT ]] && ! diff -q result/DEFAULT /etc/openvpn/server/ccd/DEFAULT; then
-		cp -f result/DEFAULT /etc/openvpn/server/ccd/DEFAULT
-	fi
-
-	# Создаем файл ips для WireGuard/AmneziaWG
-	awk '{printf ", %s", $0}' result/route-ips.txt > result/ips
-
-	# Обновляем файл ips в WireGuard/AmneziaWG только если файл изменился
-	if [[ -f result/ips ]] && ! diff -q result/ips /etc/wireguard/ips; then
-		cp -f result/ips /etc/wireguard/ips
-	fi
 
 	if [[ "$RESTRICT_FORWARD" == "y" ]]; then
 		# Обрабатываем конфигурационные файлы

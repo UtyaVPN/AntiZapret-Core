@@ -14,7 +14,6 @@ if [[ "$SUM1" != "$SUM2" ]]; then
 fi
 ./parse.sh "$1"
 
-find /etc/openvpn/server/logs -type f -size +100M -delete
 ./custom-doall.sh "$1" || true
 
 echo "Execution time: $SECONDS seconds"

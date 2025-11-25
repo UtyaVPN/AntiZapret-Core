@@ -22,13 +22,13 @@ export LC_ALL=C
 
 rm -f download/*
 
-UPDATE_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/update.sh"
+UPDATE_LINK="https://raw.githubusercontent.com/UtyaVPN/AntiZapret-Core/main/setup/root/antizapret/update.sh"
 UPDATE_PATH="update.sh"
 
-PARSE_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/parse.sh"
+PARSE_LINK="https://raw.githubusercontent.com/UtyaVPN/AntiZapret-Core/main/setup/root/antizapret/parse.sh"
 PARSE_PATH="parse.sh"
 
-DOALL_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/doall.sh"
+DOALL_LINK="https://raw.githubusercontent.com/UtyaVPN/AntiZapret-Core/main/setup/root/antizapret/doall.sh"
 DOALL_PATH="doall.sh"
 
 DOMAIN_LINK="https://antifilter.download/list/domains.lst"

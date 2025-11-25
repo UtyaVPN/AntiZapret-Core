@@ -108,20 +108,6 @@ fi
 # Clamp TCP MSS
 iptables -w -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 
-# nat
-# OpenVPN TCP port redirection for backup connections
-if [[ "$OPENVPN_80_443_TCP" == "y" ]]; then
-	iptables -w -t nat -A PREROUTING -i "$DEFAULT_INTERFACE" -p tcp --dport 80 -j REDIRECT --to-ports 50080
-	iptables -w -t nat -A PREROUTING -i "$DEFAULT_INTERFACE" -p tcp --dport 443 -j REDIRECT --to-ports 50443
-fi
-# OpenVPN UDP port redirection for backup connections
-if [[ "$OPENVPN_80_443_UDP" == "y" ]]; then
-	iptables -w -t nat -A PREROUTING -i "$DEFAULT_INTERFACE" -p udp --dport 80 -j REDIRECT --to-ports 50080
-	iptables -w -t nat -A PREROUTING -i "$DEFAULT_INTERFACE" -p udp --dport 443 -j REDIRECT --to-ports 50443
-fi
-# AmneziaWG redirection ports to WireGuard
-iptables -w -t nat -A PREROUTING -i "$DEFAULT_INTERFACE" -p udp --dport 52080 -j REDIRECT --to-ports 51080
-iptables -w -t nat -A PREROUTING -i "$DEFAULT_INTERFACE" -p udp --dport 52443 -j REDIRECT --to-ports 51443
 # VPN DNS redirection to Knot Resolver
 if [[ "$VPN_DNS" == "1" ]]; then
 	iptables -w -t nat -A PREROUTING -s ${IP}.28.0.0/22 ! -d ${IP}.28.0.1/32 -p udp --dport 53 -j DNAT --to-destination ${IP}.28.0.1
