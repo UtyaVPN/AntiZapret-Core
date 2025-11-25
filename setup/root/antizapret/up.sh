@@ -46,16 +46,6 @@ ip6tables -w -I FORWARD 1 -m conntrack --ctstate INVALID -j DROP
 # OUTPUT connection tracking
 iptables -w -I OUTPUT 1 -m conntrack --ctstate INVALID -j DROP
 ip6tables -w -I OUTPUT 1 -m conntrack --ctstate INVALID -j DROP
-# Torrent guard
-if [[ "$TORRENT_GUARD" == "y" ]]; then
-	ipset create antizapret-torrent hash:ip timeout 60 -exist
-	iptables -w -I FORWARD 2 -s ${IP}.28.0.0/16 -p tcp -m string --string "GET " --algo kmp --to 100 -m string --string "info_hash=" --algo bm -m string --string "peer_id=" --algo bm -m string --string "port=" --algo bm -j SET --add-set antizapret-torrent src --exist
-	iptables -w -I FORWARD 3 -s ${IP}.28.0.0/16 -p udp -m string --string "BitTorrent protocol" --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
-	iptables -w -I FORWARD 4 -s ${IP}.28.0.0/16 -p udp -m string --string "d1:ad2:id20:" --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
-	iptables -w -I FORWARD 5 -s ${IP}.28.0.0/16 -m set --match-set antizapret-torrent src -j DROP
-fi
-# Client isolation
-iptables -w -I FORWARD 2 ! -i "$DEFAULT_INTERFACE" -d ${IP}.28.0.0/15 -j DROP
 # Restrict forwarding
 if [[ "$RESTRICT_FORWARD" == "y" ]]; then
 	{
@@ -108,15 +98,6 @@ fi
 # Clamp TCP MSS
 iptables -w -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 
-# VPN DNS redirection to Knot Resolver
-if [[ "$VPN_DNS" == "1" ]]; then
-	iptables -w -t nat -A PREROUTING -s ${IP}.28.0.0/22 ! -d ${IP}.28.0.1/32 -p udp --dport 53 -j DNAT --to-destination ${IP}.28.0.1
-	iptables -w -t nat -A PREROUTING -s ${IP}.28.4.0/22 ! -d ${IP}.28.4.1/32 -p udp --dport 53 -j DNAT --to-destination ${IP}.28.4.1
-	iptables -w -t nat -A PREROUTING -s ${IP}.28.8.0/24 ! -d ${IP}.28.8.1/32 -p udp --dport 53 -j DNAT --to-destination ${IP}.28.8.1
-	iptables -w -t nat -A PREROUTING -s ${IP}.28.0.0/22 ! -d ${IP}.28.0.1/32 -p tcp --dport 53 -j DNAT --to-destination ${IP}.28.0.1
-	iptables -w -t nat -A PREROUTING -s ${IP}.28.4.0/22 ! -d ${IP}.28.4.1/32 -p tcp --dport 53 -j DNAT --to-destination ${IP}.28.4.1
-	iptables -w -t nat -A PREROUTING -s ${IP}.28.8.0/24 ! -d ${IP}.28.8.1/32 -p tcp --dport 53 -j DNAT --to-destination ${IP}.28.8.1
-fi
 # AntiZapret DNS redirection to Knot Resolver
 iptables -w -t nat -A PREROUTING -s ${IP}.29.0.0/22 ! -d ${IP}.29.0.1/32 -p udp --dport 53 -j DNAT --to-destination ${IP}.29.0.1
 iptables -w -t nat -A PREROUTING -s ${IP}.29.4.0/22 ! -d ${IP}.29.4.1/32 -p udp --dport 53 -j DNAT --to-destination ${IP}.29.4.1
@@ -131,8 +112,6 @@ fi
 # Mapping fake IP to real IP
 iptables -w -t nat -S ANTIZAPRET-MAPPING &>/dev/null || iptables -w -t nat -N ANTIZAPRET-MAPPING
 iptables -w -t nat -A PREROUTING -s ${IP}.29.0.0/16 -d ${IP}.30.0.0/15 -j ANTIZAPRET-MAPPING
-# SNAT VPN
-iptables -w -t nat -A POSTROUTING -s ${IP}.28.0.0/15 -o "$DEFAULT_INTERFACE" -j SNAT --to-source "$DEFAULT_IP"
 
 ./custom-up.sh
 exit 0

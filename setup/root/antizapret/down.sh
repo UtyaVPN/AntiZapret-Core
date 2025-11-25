@@ -33,13 +33,6 @@ ip6tables -w -D FORWARD -m conntrack --ctstate INVALID -j DROP
 # OUTPUT connection tracking
 iptables -w -D OUTPUT -m conntrack --ctstate INVALID -j DROP
 ip6tables -w -D OUTPUT -m conntrack --ctstate INVALID -j DROP
-# Torrent guard
-iptables -w -D FORWARD -s ${IP}.28.0.0/16 -p tcp -m string --string "GET " --algo kmp --to 100 -m string --string "info_hash=" --algo bm -m string --string "peer_id=" --algo bm -m string --string "port=" --algo bm -j SET --add-set antizapret-torrent src --exist
-iptables -w -D FORWARD -s ${IP}.28.0.0/16 -p udp -m string --string "BitTorrent protocol" --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
-iptables -w -D FORWARD -s ${IP}.28.0.0/16 -p udp -m string --string "d1:ad2:id20:" --algo kmp --to 100 -j SET --add-set antizapret-torrent src --exist
-iptables -w -D FORWARD -s ${IP}.28.0.0/16 -m set --match-set antizapret-torrent src -j DROP
-# Client isolation
-iptables -w -D FORWARD ! -i "$DEFAULT_INTERFACE" -d ${IP}.28.0.0/15 -j DROP
 # Restrict forwarding
 iptables -w -D FORWARD -s ${IP}.29.0.0/16 -m connmark --mark 0x1 -m set ! --match-set antizapret-forward dst -j DROP
 # Attack and scan protection
@@ -78,8 +71,6 @@ iptables -w -t nat -D PREROUTING -s ${IP}.29.8.0/24 ! -d ${IP}.29.8.1/32 -p tcp 
 iptables -w -t nat -D PREROUTING -s ${IP}.29.0.0/16 ! -d ${IP}.30.0.0/15 -j CONNMARK --set-mark 0x1
 # Mapping fake IP to real IP
 iptables -w -t nat -D PREROUTING -s ${IP}.29.0.0/16 -d ${IP}.30.0.0/15 -j ANTIZAPRET-MAPPING
-# SNAT VPN
-iptables -w -t nat -D POSTROUTING -s ${IP}.28.0.0/15 -o "$DEFAULT_INTERFACE" -j SNAT --to-source "$DEFAULT_IP"
 
 ./custom-down.sh
 exit 0

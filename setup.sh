@@ -105,11 +105,6 @@ until [[ "$ATTACK_PROTECTION" =~ (y|n) ]]; do
 	read -rp 'Enable network attack and scan protection? [y/n]: ' -e -i y ATTACK_PROTECTION
 done
 echo
-echo "Warning! Torrent guard block VPN traffic for 1 minute on torrent detection!"
-until [[ "$TORRENT_GUARD" =~ (y|n) ]]; do
-	read -rp $'Enable torrent guard for \001\e[1;32m\002full VPN\001\e[0m\002? [y/n]: ' -e -i y TORRENT_GUARD
-done
-echo
 until [[ "$RESTRICT_FORWARD" =~ (y|n) ]]; do
 	read -rp $'Restrict forwarding in \001\e[1;32m\002AntiZapret VPN\001\e[0m\002 to IPs from config/forward-ips.txt and result/route-ips.txt? [y/n]: ' -e -i y RESTRICT_FORWARD
 done
@@ -296,7 +291,6 @@ BLOCK_ADS=${BLOCK_ADS}
 ALTERNATIVE_IP=${ALTERNATIVE_IP}
 SSH_PROTECTION=${SSH_PROTECTION}
 ATTACK_PROTECTION=${ATTACK_PROTECTION}
-TORRENT_GUARD=${TORRENT_GUARD}
 RESTRICT_FORWARD=${RESTRICT_FORWARD}
 ROUTE_ALL=${ROUTE_ALL}
 DISCORD_INCLUDE=${DISCORD_INCLUDE}
