@@ -195,12 +195,6 @@ rm -rf /var/cache/knot-resolver/*
 rm -rf /var/cache/knot-resolver2/*
 
 #
-# Отключим IPv6
-sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sysctl -w net.ipv6.conf.default.disable_ipv6=1
-sysctl -w net.ipv6.conf.lo.disable_ipv6=1
-
-#
 # Завершим выполнение скрипта при ошибке
 set -e
 

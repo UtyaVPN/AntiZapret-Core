@@ -10,7 +10,7 @@ handle_error() {
 }
 trap 'handle_error $LINENO "$BASH_COMMAND"' ERR
 
-if [[ -n "$1" && "$1" != "ip" && "$1" != "ips" && "$1" != "host" && "$1" != "hosts" && "$1" != "noclear" && "$1" != "noclean" ]]; then
+if [[ -n "$1" && "$1" != "ip" && "$1" != "ips" && "$1" != "ip6" && "$1" != "ips6" && "$1" != "host" && "$1" != "hosts" && "$1" != "noclear" && "$1" != "noclean" ]]; then
 	echo "Ignored invalid parameter: $1"
 	set -- ""
 fi
@@ -30,8 +30,17 @@ for file in config/*.txt; do
 	sed -i -e '$a\' "$file"
 done
 
+validate_ips() {
+    while read -r line; do
+        # Check if the line is not empty and that sipcalc output does not contain "ERR"
+        if [[ -n "$line" ]] && ! sipcalc -u "$line" 2>&1 | grep -q "ERR"; then
+            echo "$line"
+        fi
+    done
+}
+
 if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "noclean" ]]; then
-	echo 'IPs...'
+	echo 'IPv4 IPs...'
 
 	# Обрабатываем конфигурационные файлы
 	sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*exclude-ips.txt | sort -u > temp/exclude-ips.txt
@@ -41,45 +50,70 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 	grep -vFxf temp/exclude-ips.txt temp/include-ips.txt > temp/route-ips.txt || > temp/route-ips.txt
 
 	# Обрабатываем конфигурационные файлы
-	awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' temp/route-ips.txt > result/route-ips.txt
+	validate_ips < temp/route-ips.txt > temp/valid-route-ips.txt
+	grep ':' temp/valid-route-ips.txt > result/route-ips6.txt || true
+	grep -v ':' temp/valid-route-ips.txt > result/route-ips.txt || true
+
 
 	# Выводим результат
 	echo "$(wc -l < result/route-ips.txt) - route-ips.txt"
+	echo "$(wc -l < result/route-ips6.txt) - route-ips6.txt"
 
 
 	if [[ "$RESTRICT_FORWARD" == "y" ]]; then
 		# Обрабатываем конфигурационные файлы
-		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*forward-ips.txt temp/route-ips.txt | sort -u \
-		| awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' > result/forward-ips.txt
+		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*forward-ips.txt | sort -u > temp/forward-ips-cleaned.txt
+		cat temp/forward-ips-cleaned.txt result/route-ips.txt result/route-ips6.txt | sort -u > temp/forward-ips-combined.txt
+		validate_ips < temp/forward-ips-combined.txt > temp/forward-ips-validated.txt
+		grep ':' temp/forward-ips-validated.txt > result/forward-ips6.txt || true
+		grep -v ':' temp/forward-ips-validated.txt > result/forward-ips.txt || true
+
 
 		# Выводим результат
 		echo "$(wc -l < result/forward-ips.txt) - forward-ips.txt"
+		echo "$(wc -l < result/forward-ips6.txt) - forward-ips6.txt"
 
 		# Обновляем ipset antizapret-forward
 		{
-			echo 'create antizapret-forward hash:net -exist'
+			echo 'create antizapret-forward hash:net family inet -exist'
 			echo 'flush antizapret-forward'
 			while read -r line; do
 				echo "add antizapret-forward $line -exist"
 			done < result/forward-ips.txt
 		} | ipset restore
+		{
+			echo 'create antizapret-forward6 hash:net family inet6 -exist'
+			echo 'flush antizapret-forward6'
+			while read -r line; do
+				echo "add antizapret-forward6 $line -exist"
+			done < result/forward-ips6.txt
+		} | ipset restore
 	fi
 
 	if [[ "$ATTACK_PROTECTION" == "y" ]]; then
 		# Обрабатываем конфигурационные файлы
-		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*allow-ips.txt | sort -u \
-		| awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' > result/allow-ips.txt
+		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*allow-ips.txt | sort -u | validate_ips > temp/allow-ips.txt
+		grep ':' temp/allow-ips.txt > result/allow-ips6.txt || true
+		grep -v ':' temp/allow-ips.txt > result/allow-ips.txt || true
 
 		# Выводим результат
 		echo "$(wc -l < result/allow-ips.txt) - allow-ips.txt"
+		echo "$(wc -l < result/allow-ips6.txt) - allow-ips6.txt"
 
 		# Обновляем ipset antizapret-allow
 		{
-			echo 'create antizapret-allow hash:net -exist'
+			echo 'create antizapret-allow hash:net family inet -exist'
 			echo 'flush antizapret-allow'
 			while read -r line; do
 				echo "add antizapret-allow $line -exist"
 			done < result/allow-ips.txt
+		} | ipset restore
+		{
+			echo 'create antizapret-allow6 hash:net family inet6 -exist'
+			echo 'flush antizapret-allow6'
+			while read -r line; do
+				echo "add antizapret-allow6 $line -exist"
+			done < result/allow-ips6.txt
 		} | ipset restore
 	fi
 fi
@@ -123,6 +157,11 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 		cp -f result/deny.rpz /etc/knot-resolver/deny.rpz.tmp
 		mv -f /etc/knot-resolver/deny.rpz.tmp /etc/knot-resolver/deny.rpz
 		sleep 5
+		if [[ "$1" != "noclear" && "$1" != "noclean" ]]; then
+			# Очищаем кэш Knot Resolver
+			count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)
+			echo "DNS cache cleared: $count entries"
+		fi
 	fi
 
 	# Обновляем файл deny2.rpz в Knot Resolver только если файл изменился
@@ -206,7 +245,7 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 			echo "DNS cache cleared: $count entries"
 		fi
 	fi
-	
+
 fi
 
 ./custom-parse.sh "$1" || true
