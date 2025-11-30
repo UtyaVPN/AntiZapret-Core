@@ -27,6 +27,8 @@ fi
 
 # Add dummy IP for DNS
 ip addr add ${IP}.29.0.1/32 dev lo || true
+ip -6 addr add fd00:10:29::1/128 dev lo || true
+ip -6 addr add ::2/128 dev lo || true
 
 # Clear knot-resolver cache
 count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)
@@ -45,7 +47,8 @@ ip6tables -w -P OUTPUT ACCEPT
 
 # Mapping fake IP to real IP
 iptables -w -t nat -S ANTIZAPRET-MAPPING &>/dev/null || iptables -w -t nat -N ANTIZAPRET-MAPPING
+ip6tables -w -t nat -S ANTIZAPRET-MAPPING &>/dev/null || ip6tables -w -t nat -N ANTIZAPRET-MAPPING
 iptables -w -t nat -A PREROUTING -s ${IP}.29.0.0/16 -d ${IP}.30.0.0/15 -j ANTIZAPRET-MAPPING
-
+ip6tables -w -t nat -A PREROUTING -s fd00:10:29::/112 -d fd00:10:30::/112 -j ANTIZAPRET-MAPPING
 
 exit 0

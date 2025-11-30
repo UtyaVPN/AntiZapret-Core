@@ -2,46 +2,21 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import socket,struct,subprocess,sys,time,argparse,threading
+import socket,struct,subprocess,sys,time,argparse,threading,ipaddress
 from collections import deque
-from ipaddress import IPv4Network
-from dnslib import DNSRecord,RCODE,QTYPE,A
+from ipaddress import IPv4Network,IPv6Network
+from dnslib import DNSRecord,RCODE,QTYPE,A,AAAA
 from dnslib.server import DNSServer,DNSHandler,BaseResolver,DNSLogger
 
 class ProxyResolver(BaseResolver):
-    """
-        Proxy resolver - passes all requests to upstream DNS server and
-        returns response
-
-        Note that the request/response will be each be decoded/re-encoded
-        twice:
-
-        a) Request packet received by DNSHandler and parsed into DNSRecord
-        b) DNSRecord passed to ProxyResolver, serialised back into packet
-           and sent to upstream DNS server
-        c) Upstream DNS server returns response packet which is parsed into
-           DNSRecord
-        d) ProxyResolver returns DNSRecord to DNSHandler which re-serialises
-           this into packet and returns to client
-
-        In practice this is actually fairly useful for testing but for a
-        'real' transparent proxy option the DNSHandler logic needs to be
-        modified (see PassthroughDNSHandler)
-    """
-    def __init__(self,address,port,timeout,ip_range,cleanup_interval,cleanup_expiry,min_ttl,max_ttl):
-        self.ip_pool = deque([str(x) for x in IPv4Network(ip_range).hosts()])
+    def __init__(self,address,port,timeout,ip_range,ip6_range,cleanup_interval,cleanup_expiry,min_ttl,max_ttl):
+        self.ip4_pool = deque([str(x) for x in IPv4Network(ip_range).hosts()])
+        self.ip6_pool = deque([str(x) for x in IPv6Network(ip6_range).hosts()])
         self.ip_map = {}
-        # Loading existing mappings
-        rule = "iptables -w -t nat -S ANTIZAPRET-MAPPING | awk '{if (NR<2) {next}; print substr($4, 1, length($4)-3), $8}'"
-        mappings = subprocess.run(rule,shell=True,check=True,capture_output=True,text=True).stdout.splitlines()
-        current_time = time.time()
-        for mapping in mappings:
-            fake_ip,real_ip = mapping.split(" ")
-            if not self.mapping_ip(real_ip,fake_ip,current_time):
-                rule = "iptables -w -t nat -F ANTIZAPRET-MAPPING"
-                subprocess.run(rule,shell=True,check=True)
-                sys.exit(1)
-        print(f"Loaded: {len(mappings)} fake IPs")
+
+        self.load_mappings("iptables -w -t nat -S ANTIZAPRET-MAPPING", 4)
+        self.load_mappings("ip6tables -w -t nat -S ANTIZAPRET-MAPPING", 6)
+
         self.address = address
         self.port = port
         self.timeout = timeout
@@ -50,37 +25,60 @@ class ProxyResolver(BaseResolver):
         self.min_ttl = min_ttl
         self.max_ttl = max_ttl
         self.lock = threading.Lock()
-        # Start thread for cleanup fake IPs
         threading.Thread(target=self.cleanup_fake_ips_worker,daemon=True).start()
 
-    def get_fake_ip(self,real_ip):
+    def load_mappings(self, rule, ip_version):
+        mappings_cmd = f"{rule} | awk '{{if (NR<2) {{next}}; print substr($4, 1, length($4)-3), $8}}'"
+        try:
+            mappings = subprocess.run(mappings_cmd, shell=True, check=True, capture_output=True, text=True).stdout.splitlines()
+            current_time = time.time()
+            for mapping in mappings:
+                fake_ip, real_ip = mapping.split(" ")
+                if not self.mapping_ip(real_ip, fake_ip, current_time):
+                    flush_rule = f"{'ip6' if ip_version == 6 else 'ip'}tables -w -t nat -F ANTIZAPRET-MAPPING"
+                    subprocess.run(flush_rule, shell=True, check=True)
+                    sys.exit(1)
+            print(f"Loaded: {len(mappings)} fake IPv{ip_version} IPs")
+        except subprocess.CalledProcessError as e:
+            print(f"Error loading IPv{ip_version} mappings: {e}")
+
+    def get_fake_ip(self,real_ip_str):
         with self.lock:
-            entry = self.ip_map.get(real_ip)
+            entry = self.ip_map.get(real_ip_str)
             if entry:
                 entry["last_access"] = time.time()
                 return entry["fake_ip"]
             else:
                 try:
-                    fake_ip = self.ip_pool.popleft()
+                    ip_obj = ipaddress.ip_address(real_ip_str)
+                    if ip_obj.version == 4:
+                        fake_ip = self.ip4_pool.popleft()
+                        iptables_cmd = "iptables"
+                    else:
+                        fake_ip = self.ip6_pool.popleft()
+                        iptables_cmd = "ip6tables"
                 except IndexError:
-                    print("Error: No fake IP left")
+                    print(f"Error: No fake IPv{ip_obj.version} left")
                     return None
-                self.ip_map[real_ip] = {"fake_ip": fake_ip,"last_access": time.time()}
-                rule = f"iptables -w -t nat -A ANTIZAPRET-MAPPING -d {fake_ip} -j DNAT --to {real_ip}"
+
+                self.ip_map[real_ip_str] = {"fake_ip": fake_ip, "last_access": time.time()}
+                rule = f"{iptables_cmd} -w -t nat -A ANTIZAPRET-MAPPING -d {fake_ip} -j DNAT --to {real_ip_str}"
                 subprocess.run(rule,shell=True,check=True)
-                #print(f"Mapping: {fake_ip} to {real_ip}")
                 return fake_ip
 
-    def mapping_ip(self,real_ip,fake_ip,last_access):
-        if self.ip_map.get(real_ip):
-            print(f"Error: Real IP {real_ip} is already mapped")
+    def mapping_ip(self,real_ip_str,fake_ip_str,last_access):
+        if self.ip_map.get(real_ip_str):
+            print(f"Error: Real IP {real_ip_str} is already mapped")
             return False
         try:
-            self.ip_pool.remove(fake_ip)
-            self.ip_map[real_ip] = {"fake_ip": fake_ip,"last_access": last_access}
-            #print(f"Mapping: {fake_ip} to {real_ip}")
+            ip_obj = ipaddress.ip_address(fake_ip_str)
+            if ip_obj.version == 4:
+                self.ip4_pool.remove(fake_ip_str)
+            else:
+                self.ip6_pool.remove(fake_ip_str)
+            self.ip_map[real_ip_str] = {"fake_ip": fake_ip_str, "last_access": last_access}
         except ValueError:
-            print(f"Error: Fake IP {fake_ip} not in fake IP pool")
+            print(f"Error: Fake IP {fake_ip_str} not in fake IP pool")
             return False
         return True
 
@@ -93,18 +91,32 @@ class ProxyResolver(BaseResolver):
         with self.lock:
             current_time = time.time()
             cleanup_ips = []
-            rules = ["*nat"]
+            rules4 = ["*nat"]
+            rules6 = ["*nat"]
+
             for key,entry in self.ip_map.items():
                 if current_time - entry["last_access"] > self.cleanup_expiry:
                     cleanup_ips.append((key,entry["fake_ip"]))
-            for real_ip,fake_ip in cleanup_ips:
-                self.ip_pool.appendleft(fake_ip)
-                del self.ip_map[real_ip]
-                rules.append(f"-D ANTIZAPRET-MAPPING -d {fake_ip} -j DNAT --to {real_ip}")
-                #print(f"Unmapping: {fake_ip} to {real_ip}")
-            rules.append("COMMIT")
-            subprocess.run(["iptables-restore","-w","-n"],input="\n".join(rules).encode(),check=True)
-            print(f"Cleaned: {len(cleanup_ips)} expired fake IPs")
+
+            for real_ip_str,fake_ip_str in cleanup_ips:
+                ip_obj = ipaddress.ip_address(fake_ip_str)
+                if ip_obj.version == 4:
+                    self.ip4_pool.appendleft(fake_ip_str)
+                    rules = rules4
+                else:
+                    self.ip6_pool.appendleft(fake_ip_str)
+                    rules = rules6
+                del self.ip_map[real_ip_str]
+                rules.append(f"-D ANTIZAPRET-MAPPING -d {fake_ip_str} -j DNAT --to {real_ip_str}")
+
+            rules4.append("COMMIT")
+            rules6.append("COMMIT")
+            if len(rules4) > 2:
+                subprocess.run(["iptables-restore","-w","-n"],input="\n".join(rules4).encode(),check=True)
+            if len(rules6) > 2:
+                subprocess.run(["ip6tables-restore","-w","-n"],input="\n".join(rules6).encode(),check=True)
+            if cleanup_ips:
+                print(f"Cleaned: {len(cleanup_ips)} expired fake IPs")
 
     def resolve(self,request,handler):
         try:
@@ -113,31 +125,31 @@ class ProxyResolver(BaseResolver):
             else:
                 proxy_r = request.send(self.address,self.port,tcp=True,timeout=self.timeout)
             reply = DNSRecord.parse(proxy_r)
-            if request.q.qtype == QTYPE.A:
-                #print("GOT A")
+
+            if request.q.qtype in (QTYPE.A, QTYPE.AAAA):
                 newrr = []
                 for record in reply.rr:
-                    if record.rtype != QTYPE.A:
-                        continue
-                    newrr.append(record)
+                    if record.rtype in (QTYPE.A, QTYPE.AAAA):
+                        newrr.append(record)
                 reply.rr = newrr
                 for record in reply.rr:
-                    #print(dir(record))
-                    #print(type(record.rdata))
                     real_ip = str(record.rdata)
                     fake_ip = self.get_fake_ip(real_ip)
                     if not fake_ip:
                         reply = request.reply()
                         reply.header.rcode = RCODE.SERVFAIL
                         return reply
-                    record.rdata = A(fake_ip)
+                    if record.rtype == QTYPE.A:
+                        record.rdata = A(fake_ip)
+                    else:
+                        record.rdata = AAAA(fake_ip)
                     record.rname = request.q.qname
+            
             for record in reply.rr:
                 if record.ttl < self.min_ttl:
                     record.ttl = self.min_ttl
                 elif record.ttl > self.max_ttl:
                     record.ttl = self.max_ttl
-            #print(reply)
         except Exception as e:
             print(f"Error: {e}")
             reply = request.reply()
@@ -172,7 +184,10 @@ def send_tcp(data,host,port):
     """
     sock = None
     try:
-        sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        if ipaddress.ip_address(host).version == 4:
+            sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        else:
+            sock = socket.socket(socket.AF_INET6,socket.SOCK_STREAM)
         sock.connect((host,port))
         sock.sendall(data)
         response = sock.recv(8192)
@@ -190,7 +205,10 @@ def send_udp(data,host,port):
     """
     sock = None
     try:
-        sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        if ipaddress.ip_address(host).version == 4:
+            sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        else:
+            sock = socket.socket(socket.AF_INET6,socket.SOCK_DGRAM)
         sock.sendto(data,(host,port))
         response,server = sock.recvfrom(8192)
         return response
@@ -205,7 +223,10 @@ if __name__ == "__main__":
                     help="Local proxy port (default:53)")
     p.add_argument("--address",default="127.0.0.2",
                     metavar="<address>",
-                    help="Local proxy listen address (default:all)")
+                    help="Local proxy listen address (default:127.0.0.2)")
+    p.add_argument("--address6",default="::2",
+                    metavar="<address>",
+                    help="Local proxy listen IPv6 address (default: ::2)")
     p.add_argument("--upstream",default="127.0.0.1:53",
                     metavar="<dns server:port>",
                     help="Upstream DNS server:port (default:127.0.0.1:53)")
@@ -223,6 +244,9 @@ if __name__ == "__main__":
     p.add_argument("--ip-range",default="10.30.0.0/15",
                     metavar="<ip/mask>",
                     help="Fake IP range (default:10.30.0.0/15)")
+    p.add_argument("--ip6-range",default="fd00:10:30::/112",
+                    metavar="<ip6/mask>",
+                    help="Fake IPv6 range (default:fd00:10:30::/112)")
     p.add_argument("--cleanup-interval",type=int,default=3600,
                     metavar="<seconds>",
                     help="Seconds between fake IP cleanup runs (default: 3600)")
@@ -238,26 +262,40 @@ if __name__ == "__main__":
     args = p.parse_args()
     args.dns,_,args.dns_port = args.upstream.partition(":")
     args.dns_port = int(args.dns_port or 53)
+    
     print("Starting Proxy Resolver (%s:%d -> %s:%d) [%s]" % (
                         args.address or "*",args.port,
                         args.dns,args.dns_port,
                         "UDP/TCP" if args.tcp else "UDP"))
-    resolver = ProxyResolver(args.dns,args.dns_port,args.timeout,args.ip_range,args.cleanup_interval,args.cleanup_expiry,args.min_ttl,args.max_ttl)
+
+    resolver = ProxyResolver(args.dns,args.dns_port,args.timeout,args.ip_range,args.ip6_range,args.cleanup_interval,args.cleanup_expiry,args.min_ttl,args.max_ttl)
     handler = PassthroughDNSHandler if args.passthrough else DNSHandler
     logger = DNSLogger(args.log,prefix=args.log_prefix)
-    udp_server = DNSServer(resolver,
-                           port=args.port,
-                           address=args.address,
-                           logger=logger,
-                           handler=handler)
-    udp_server.start_thread()
-    if args.tcp:
-        tcp_server = DNSServer(resolver,
-                               port=args.port,
-                               address=args.address,
-                               tcp=True,
-                               logger=logger,
-                               handler=handler)
-        tcp_server.start_thread()
-    while udp_server.isAlive():
-        time.sleep(1)
+    
+    servers = []
+    
+    if args.address:
+        udp_server = DNSServer(resolver, port=args.port, address=args.address, logger=logger, handler=handler)
+        servers.append(udp_server)
+        if args.tcp:
+            tcp_server = DNSServer(resolver, port=args.port, address=args.address, tcp=True, logger=logger, handler=handler)
+            servers.append(tcp_server)
+
+    if args.address6:
+        udp_server_v6 = DNSServer(resolver, port=args.port, address=args.address6, logger=logger, handler=handler)
+        servers.append(udp_server_v6)
+        if args.tcp:
+            tcp_server_v6 = DNSServer(resolver, port=args.port, address=args.address6, tcp=True, logger=logger, handler=handler)
+            servers.append(tcp_server_v6)
+
+    for server in servers:
+        server.start_thread()
+
+    while True:
+        try:
+            time.sleep(1)
+            sys.stdout.flush()
+        except KeyboardInterrupt:
+            for server in servers:
+                server.stop()
+            break

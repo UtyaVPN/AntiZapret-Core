@@ -41,7 +41,13 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 	grep -vFxf temp/exclude-ips.txt temp/include-ips.txt > temp/route-ips.txt || > temp/route-ips.txt
 
 	# Обрабатываем конфигурационные файлы
-	awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' temp/route-ips.txt > result/route-ips.txt
+	awk -F'[/.:]' '{
+    if (NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32) {
+        print
+    } else if ($0 ~ /^[0-9a-fA-F:]+\/[0-9]+$/) {
+        print
+    }
+}' temp/route-ips.txt > result/route-ips.txt
 
 	# Выводим результат
 	echo "$(wc -l < result/route-ips.txt) - route-ips.txt"
