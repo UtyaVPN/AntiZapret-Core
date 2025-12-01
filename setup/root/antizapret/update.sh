@@ -14,7 +14,7 @@ if [[ -n "$1" && "$1" != "ip" && "$1" != "ips" && "$1" != "host" && "$1" != "hos
 	set -- ""
 fi
 
-echo 'Update AntiZapret VPN files:'
+echo 'Update AntiZapret-Core files:'
 
 cd /root/antizapret
 

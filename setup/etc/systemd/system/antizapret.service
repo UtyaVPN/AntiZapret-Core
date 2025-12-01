@@ -1,5 +1,5 @@
 [Unit]
-Description=AntiZapret VPN
+Description=AntiZapret-Core
 After=multi-user.target kresd@1.service kresd@2.service
 Requires=kresd@1.service kresd@2.service
 Wants=multi-user.target

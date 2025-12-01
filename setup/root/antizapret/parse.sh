@@ -15,7 +15,7 @@ if [[ -n "$1" && "$1" != "ip" && "$1" != "ips" && "$1" != "host" && "$1" != "hos
 	set -- ""
 fi
 
-echo 'Parse AntiZapret Core files:'
+echo 'Parse AntiZapret-Core files:'
 
 export LC_ALL=C
 
@@ -147,7 +147,7 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 	sed 's/^/./;s/$/$/' result/exclude-hosts.txt >> temp/exclude-patterns2.txt
 
 	if [[ "$ROUTE_ALL" = "y" ]]; then
-		# Пустим все домены через AntiZapret VPN
+		# Пустим все домены через AntiZapret-Core
 		grep -Ff temp/exclude-patterns2.txt temp/include-hosts6.txt > temp/include-hosts7.txt \
 		|| ( echo 'Low memory!'; cp temp/include-hosts6.txt temp/include-hosts7.txt )
 		echo '.' >> temp/include-hosts7.txt

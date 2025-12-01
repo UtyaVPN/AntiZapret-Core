@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Скрипт для установки AntiZapret Core (Smart DNS + Fake IP)
+# Скрипт для установки AntiZapret-Core (Smart DNS + Fake IP)
 #
 # https://github.com/UtyaVPN/AntiZapret-Core
 #
@@ -37,14 +37,14 @@ elif [[ "$OS" != "debian" ]] && [[ "$OS" != "ubuntu" ]]; then
 fi
 
 echo
-echo -e '\e[1;32mInstalling AntiZapret Core...\e[0m'
+echo -e '\e[1;32mInstalling AntiZapret-Core...\e[0m'
 echo 'Smart DNS + Fake IP'
 echo
 
 #
 # Спрашиваем о настройках
 echo
-echo -e 'Choose DNS resolvers for \e[1;32mAntiZapret Core\e[0m:'
+echo -e 'Choose DNS resolvers for \e[1;32mAntiZapret-Core\e[0m:'
 echo '    1) Cloudflare+Quad9  - Recommended by default'
 echo '        +MSK-IX+NSDI *'
 echo '    2) Cloudflare+Quad9  - Use if default choice fails to resolve domains'
@@ -210,7 +210,6 @@ DEFAULT_IP=${DEFAULT_IP}
 ANTIZAPRET_DNS=${ANTIZAPRET_DNS}
 BLOCK_ADS=${BLOCK_ADS}
 ALTERNATIVE_IP=${ALTERNATIVE_IP}
-
 ROUTE_ALL=${ROUTE_ALL}
 DISCORD_INCLUDE=${DISCORD_INCLUDE}
 CLOUDFLARE_INCLUDE=${CLOUDFLARE_INCLUDE}
@@ -244,7 +243,7 @@ rm -rf /tmp/dnslib
 rm -rf /tmp/antizapret
 
 #
-# Настраиваем DNS в AntiZapret VPN
+# Настраиваем DNS в AntiZapret-Core
 if [[ "$ANTIZAPRET_DNS" == "2" ]]; then
 	# Cloudflare+Quad9
 	sed -i "s/'62\.76\.76\.62', '62\.76\.62\.76', '195\.208\.4\.1', '195\.208\.5\.1'/'1.1.1.1', '1.0.0.1', '9.9.9.10', '149.112.112.10'/" /etc/knot-resolver/kresd.conf
@@ -306,7 +305,7 @@ fi
 #
 # Перезагружаем
 echo
-echo -e '\e[1;32mAntiZapret Core installed successfully!\e[0m'
+echo -e '\e[1;32mAntiZapret-Core installed successfully!\e[0m'
 echo 'Rebooting...'
 
 reboot
