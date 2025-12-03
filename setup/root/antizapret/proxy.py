@@ -248,12 +248,12 @@ if __name__ == "__main__":
                     help="Log hooks to enable (default: +truncated,+error,-request,-reply,-recv,-send,-data)")
     p.add_argument("--log-prefix",action="store_true",default=False,
                     help="Log prefix (timestamp/handler/resolver) (default: False)")
-    p.add_argument("--ip-range",default="19.84.0.0/15",
+    p.add_argument("--ip-range",default="10.30.0.0/15",
                     metavar="<ip/mask>",
-                    help="Fake IP range (default:19.84.0.0/15)")
-    p.add_argument("--ip6-range",default="fd00:19:84::/112",
+                    help="Fake IP range (default:10.30.0.0/15)")
+    p.add_argument("--ip6-range",default="fd00:10:30::/112",
                     metavar="<ip6/mask>",
-                    help="Fake IPv6 range (default:fd00:19:84::/112)")
+                    help="Fake IPv6 range (default:fd00:10:30::/112)")
     p.add_argument("--cleanup-interval",type=int,default=3600,
                     metavar="<seconds>",
                     help="Seconds between fake IP cleanup runs (default: 3600)")
