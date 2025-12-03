@@ -52,7 +52,23 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 	# Выводим результат
 	echo "$(wc -l < result/route-ips.txt) - route-ips.txt"
 
+	if [[ "$ATTACK_PROTECTION" == "y" ]]; then
+		# Обрабатываем конфигурационные файлы
+		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*allow-ips.txt | sort -u \
+		| awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' > result/allow-ips.txt
 
+		# Выводим результат
+		echo "$(wc -l < result/allow-ips.txt) - allow-ips.txt"
+
+		# Обновляем ipset antizapret-allow
+		{
+			echo 'create antizapret-allow hash:net -exist'
+			echo 'flush antizapret-allow'
+			while read -r line; do
+				echo "add antizapret-allow $line -exist"
+			done < result/allow-ips.txt
+		} | ipset restore
+	fi
 fi
 
 if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" == "noclean" ]]; then

@@ -38,7 +38,6 @@ fi
 
 echo
 echo -e '\e[1;32mInstalling AntiZapret-Core...\e[0m'
-echo 'Smart DNS + Fake IP'
 echo
 
 #
@@ -67,6 +66,16 @@ echo 'Default IP address range:      10.28.0.0/14'
 echo 'Alternative IP address range: 172.28.0.0/14'
 until [[ "$ALTERNATIVE_IP" =~ (y|n) ]]; do
 	read -rp 'Use alternative range of IP addresses? [y/n]: ' -e -i n ALTERNATIVE_IP
+done
+echo
+
+until [[ "$SSH_PROTECTION" =~ (y|n) ]]; do
+	read -rp 'Enable SSH brute-force protection? [y/n]: ' -e -i y SSH_PROTECTION
+done
+echo
+echo "Warning! Network attack and scan protection may block VPN or third-party applications!"
+until [[ "$ATTACK_PROTECTION" =~ (y|n) ]]; do
+	read -rp 'Enable network attack and scan protection? [y/n]: ' -e -i y ATTACK_PROTECTION
 done
 echo
 
@@ -210,6 +219,8 @@ DEFAULT_IP=${DEFAULT_IP}
 ANTIZAPRET_DNS=${ANTIZAPRET_DNS}
 BLOCK_ADS=${BLOCK_ADS}
 ALTERNATIVE_IP=${ALTERNATIVE_IP}
+SSH_PROTECTION=${SSH_PROTECTION}
+ATTACK_PROTECTION=${ATTACK_PROTECTION}
 ROUTE_ALL=${ROUTE_ALL}
 DISCORD_INCLUDE=${DISCORD_INCLUDE}
 CLOUDFLARE_INCLUDE=${CLOUDFLARE_INCLUDE}
