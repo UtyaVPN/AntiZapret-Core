@@ -848,6 +848,9 @@ thetvdb.com
 wa.me
 whatsapp.com
 whatsapp.net
+entware.net
+roblox.com
+rbxcdn.com
 
 # Блокирует DNS
 library.hydra.wiki

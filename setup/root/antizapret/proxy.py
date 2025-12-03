@@ -146,10 +146,17 @@ class ProxyResolver(BaseResolver):
                     record.rname = request.q.qname
             
             for record in reply.rr:
+                if record.rtype == QTYPE.A:
+                    record.rdata = A(fake_ip)
+                else:
+                    record.rdata = AAAA(fake_ip)
+                record.rname = request.q.qname
+
                 if record.ttl < self.min_ttl:
                     record.ttl = self.min_ttl
                 elif record.ttl > self.max_ttl:
                     record.ttl = self.max_ttl
+
         except Exception as e:
             print(f"Error: {e}")
             reply = request.reply()
