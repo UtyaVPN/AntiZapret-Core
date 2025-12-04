@@ -98,6 +98,12 @@ GOOGLE_IPS_PATH="download/google-ips.txt"
 AKAMAI_IPS_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/download/akamai-ips.txt"
 AKAMAI_IPS_PATH="download/akamai-ips.txt"
 
+WHATSAPP_IPS_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/download/whatsapp-ips.txt"
+WHATSAPP_IPS_PATH="download/whatsapp-ips.txt"
+
+ROBLOX_IPS_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/download/roblox-ips.txt"
+ROBLOX_IPS_PATH="download/roblox-ips.txt"
+
 function download {
 	local path="${1}"
 	local tmp_path="${path}.tmp"
@@ -172,6 +178,8 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 	[[ "$TELEGRAM_INCLUDE" = "y" ]] && { download $TELEGRAM_IPS_PATH $TELEGRAM_IPS_LINK & pids="$pids $!"; }
 	[[ "$GOOGLE_INCLUDE" = "y" ]] && { download $GOOGLE_IPS_PATH $GOOGLE_IPS_LINK & pids="$pids $!"; }
 	[[ "$AKAMAI_INCLUDE" = "y" ]] && { download $AKAMAI_IPS_PATH $AKAMAI_IPS_LINK & pids="$pids $!"; }
+	[[ "$WHATSAPP_INCLUDE" = "y" ]] && { download $WHATSAPP_IPS_PATH $WHATSAPP_IPS_LINK & pids="$pids $!"; }
+	[[ "$ROBLOX_INCLUDE" = "y" ]] && { download $ROBLOX_IPS_PATH $ROBLOX_IPS_LINK & pids="$pids $!"; }
 fi
 
 # Wait for all downloads to finish
