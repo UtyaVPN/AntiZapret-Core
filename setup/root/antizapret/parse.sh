@@ -190,10 +190,18 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 		sleep 5
 		if [[ "$1" != "noclear" && "$1" != "noclean" ]]; then
 			# Очищаем кэш Knot Resolver
-			count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)
-			echo "DNS cache cleared (kresd@1): $count entries"
-			count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/2 | grep -oE '[0-9]+' || echo 0)
-			echo "DNS cache cleared (kresd@2): $count entries"
+			if [[ -S /run/knot-resolver/control/1 ]]; then
+				count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)
+				echo "DNS cache cleared (kresd@1): $count entries"
+			else
+				echo "Warning: Knot Resolver control socket @1 not found, skipping cache clear."
+			fi
+			if [[ -S /run/knot-resolver/control/2 ]]; then
+				count=$(echo 'cache.clear()' | socat - /run/knot-resolver/control/2 | grep -oE '[0-9]+' || echo 0)
+				echo "DNS cache cleared (kresd@2): $count entries"
+			else
+				echo "Warning: Knot Resolver control socket @2 not found, skipping cache clear."
+			fi
 		fi
 	fi
 	
