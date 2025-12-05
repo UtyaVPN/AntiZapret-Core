@@ -95,11 +95,11 @@ until [[ "$TELEGRAM_INCLUDE" =~ (y|n) ]]; do
 done
 echo
 until [[ "$WHATSAPP_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include WhatsApp IPs in \001\e[1;32m\002AntiZapret VPN\001\e[0m\002? [y/n]: ' -e -i y WHATSAPP_INCLUDE
+	read -rp $'Include WhatsApp IPs in? [y/n]: ' -e -i y WHATSAPP_INCLUDE
 done
 echo
 until [[ "$ROBLOX_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Roblox IPs in \001\e[1;32m\002AntiZapret VPN\001\e[0m\002? [y/n]: ' -e -i y ROBLOX_INCLUDE
+	read -rp $'Include Roblox IPs? [y/n]: ' -e -i y ROBLOX_INCLUDE
 done
 echo
 until [[ "$AMAZON_INCLUDE" =~ (y|n) ]]; do
