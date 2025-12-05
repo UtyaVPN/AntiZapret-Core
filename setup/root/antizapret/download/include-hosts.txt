@@ -851,6 +851,34 @@ whatsapp.net
 entware.net
 roblox.com
 rbxcdn.com
+facetime.apple.com 
+facetime-apple-com.we.apple-dns.net
+pepephone.com
+onlineprinters.com
+onlineprinters.org
+onlineprinters.be
+onlineprinters.dk
+onlineprinters.de
+onlineprinters.es
+onlineprinters.fr
+onlineprinters.ie
+onlineprinters.it
+onlineprinters.lu
+onlineprinters.nl
+onlineprinters.at
+onlineprinters.pl
+onlineprinters.se
+onlineprinters.ch
+
+meet.google.com
+stun.l.google.com
+stun1.l.google.com
+stun2.l.google.com
+stun3.l.google.com
+stun4.l.google.com
+
+#stun.cloudflare.com
+#stun.nextcloud.com
 
 # Блокирует DNS
 library.hydra.wiki
