@@ -20,7 +20,6 @@ signal.org
 hetzner.com
 lostfilm.tv
 licdn.com
-#t-ru.org
 rutrk.org
 nnm-club.ws
 nnmclub.ch
@@ -478,7 +477,6 @@ windscribe.com
 vpngate.net
 rebrand.ly
 adguard.com
-#antizapret.prostovpn.org
 avira.com
 mullvad.net
 invent.kde.org
@@ -828,6 +826,7 @@ unsplash.com
 mega.nz
 mega.co.nz
 snapchat.com
+sc-cdn.net
 chattti.com
 centrum.cz
 openevidence.com
@@ -869,16 +868,27 @@ onlineprinters.at
 onlineprinters.pl
 onlineprinters.se
 onlineprinters.ch
-
+ip4.static.sl-reverse.com
+azurefd.net
+reolink.com
+neuesbad.de
 meet.google.com
 stun.l.google.com
+stun-anycast.l.google.com
 stun1.l.google.com
 stun2.l.google.com
 stun3.l.google.com
 stun4.l.google.com
-
+turns.goog
+fpvcdn.com
 #stun.cloudflare.com
 #stun.nextcloud.com
+download.asrock.com
+buf.build
+jabra.com
+bsh-group.com
+payment-website-pci.ol.epicgames.com
+#cloud-ip.cc
 
 # Блокирует DNS
 library.hydra.wiki
@@ -892,6 +902,7 @@ support.pokemon.com
 en.help.roblox.com
 meta.ai
 support.opendns.com
+help.ui.com
 
 # Сертификаты
 letsencrypt.org

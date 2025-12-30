@@ -144,9 +144,9 @@ done
 
 #
 # Отключим фоновые обновления системы
-systemctl stop unattended-upgrades &>/dev/null
-systemctl stop apt-daily.timer &>/dev/null
-systemctl stop apt-daily-upgrade.timer &>/dev/null
+systemctl stop unattended-upgrades
+systemctl stop apt-daily.timer
+systemctl stop apt-daily-upgrade.timer
 
 #
 # Остановим и выключим обновляемые службы
@@ -155,13 +155,13 @@ systemctl disable --now kresd@2 &>/dev/null
 systemctl disable --now antizapret &>/dev/null
 systemctl disable --now antizapret-update &>/dev/null
 systemctl disable --now antizapret-update.timer &>/dev/null
-
-#
 # Удаляем кэш Knot Resolver
 rm -rf /var/cache/knot-resolver/*
 rm -rf /var/cache/knot-resolver2/*
 
 #
+# Принудительная загрузка модуля nf_conntrack
+echo "nf_conntrack" > /etc/modules-load.d/nf_conntrack.conf
 # Завершим выполнение скрипта при ошибке
 set -e
 
@@ -197,8 +197,8 @@ echo "deb [signed-by=/etc/apt/keyrings/cznic-labs-pkg.gpg] https://pkg.labs.nic.
 #
 # Ставим необходимые пакеты
 apt-get update
-apt-get install --reinstall -y git iptables knot-resolver idn sipcalc python3-pip diffutils socat lua-cqueues ipset
-apt-get autoremove -y
+apt-get install --reinstall -y git gawk knot-resolver idn sipcalc python3-pip diffutils socat lua-cqueues ipset irqbalance
+apt-get autoremove --purge -y
 apt-get clean
 
 #
@@ -214,9 +214,9 @@ git clone https://github.com/UtyaVPN/AntiZapret-Core.git /tmp/antizapret
 
 #
 # Сохраняем пользовательские настройки и обработчики custom*.sh
-cp /root/antizapret/config/*.txt /tmp/antizapret/setup/root/antizapret/config/ &>/dev/null || true
-cp /root/antizapret/custom*.sh /tmp/antizapret/setup/root/antizapret/ &>/dev/null || true
-cp /etc/knot-resolver/*.lua /tmp/antizapret/setup/etc/knot-resolver/ &>/dev/null || true
+cp /root/antizapret/config/*.txt /tmp/antizapret/setup/root/antizapret/config/ || true
+cp /root/antizapret/custom*.sh /tmp/antizapret/setup/root/antizapret/ || true
+cp /etc/knot-resolver/*.lua /tmp/antizapret/setup/etc/knot-resolver/ || true
 
 #
 # Сохраняем настройки
@@ -290,7 +290,7 @@ if [[ "$ALTERNATIVE_IP" == "y" ]]; then
 fi
 
 #
-# Загружаем и создаем списки исключений IP-адресов
+# Загружаем и создаем списки исключений IPv4-адресов
 /root/antizapret/doall.sh ip
 
 #
