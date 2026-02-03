@@ -20,9 +20,8 @@ if [[ -z "$DEFAULT_IP" ]]; then
 fi
 
 [[ "$ALTERNATIVE_IP" == "y" ]] && IP="${IP:-172}" || IP="10"
-[[ "$ALTERNATIVE_FAKE_IP" == "y" ]] && FAKE_IP="${FAKE_IP:-198.18}" || FAKE_IP="$IP.30"
 
-ip addr del 10.77.77.77/32 dev lo
+ip addr del $IP.77.77.77/32 dev lo
 
 # filter
 # INPUT connection tracking

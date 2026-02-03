@@ -4,6 +4,7 @@ After=multi-user.target
 Wants=multi-user.target
 
 [Service]
+EnvironmentFile=-/root/antizapret/setup
 LimitNPROC=infinity
 LimitNOFILE=65535
 WorkingDirectory=/root/antizapret

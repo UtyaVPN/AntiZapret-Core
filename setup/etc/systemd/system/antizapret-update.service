@@ -6,6 +6,8 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
+Type=oneshot
+EnvironmentFile=-/root/antizapret/setup
 WorkingDirectory=/root/antizapret
 ExecStart=/bin/bash -c 'cat /root/antizapret/doall.sh | bash -s noclear'
 Restart=on-failure

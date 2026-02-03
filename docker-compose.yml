@@ -24,11 +24,15 @@ services:
       - ALTERNATIVE_IP=n
       # Use alternative range of FAKE IP addresses? (y/n)
       - ALTERNATIVE_FAKE_IP=y
+      # Enable SSH brute-force protection? (y/n)
+      - SSH_PROTECTION=y
+      # Enable network attack and scan protection? (y/n)
+      - ATTACK_PROTECTION=y
       # Clear hosts from gambling and betting websites (y/n)
       - CLEAR_HOSTS=y
     healthcheck:
-      test: ["CMD-SHELL", "ss -lntu | grep -q 127.0.0.1:53 && ss -lntu | grep -q 127.0.0.2:53"]
-      interval: 10s
+      test: ["CMD-SHELL", "echo 'cache.count()' | socat - /run/knot-resolver/control/1"]
+      interval: 20s
       timeout: 5s
       retries: 3
-      start_period: 70s
+      start_period: 60s
