@@ -14,31 +14,22 @@ if [ -f "/etc/sysctl.d/99-antizapret.conf" ]; then
     done < /etc/sysctl.d/99-antizapret.conf
 fi
 
-# Initialize config directory if empty
-if [ -z "$(ls -A /root/antizapret/config)" ]; then
-    echo "Initializing config directory with defaults..."
-    cp -r /root/antizapret/config_default/* /root/antizapret/config/
+# Initialize config directory structure
+if [ ! -d "/root/antizapret/config/manual" ] || [ ! -d "/root/antizapret/config/sources" ]; then
+    echo "Initializing config directory structure..."
+    mkdir -p /root/antizapret/config/manual /root/antizapret/config/sources
+    
+    # Copy defaults for missing files, but don't overwrite existing ones
+    cp -rn /root/antizapret/config_default/* /root/antizapret/config/
 fi
 
 echo "Generating /root/antizapret/setup configuration..."
 echo "SETUP_DATE=$(date --iso-8601=seconds)" > /root/antizapret/setup
 echo "ANTIZAPRET_DNS=$ANTIZAPRET_DNS" >> /root/antizapret/setup
-echo "BLOCK_ADS=$BLOCK_ADS" >> /root/antizapret/setup
 echo "ALTERNATIVE_IP=$ALTERNATIVE_IP" >> /root/antizapret/setup
 echo "ALTERNATIVE_FAKE_IP=$ALTERNATIVE_FAKE_IP" >> /root/antizapret/setup
 echo "SSH_PROTECTION=n" >> /root/antizapret/setup
 echo "ATTACK_PROTECTION=n" >> /root/antizapret/setup
-echo "DISCORD_INCLUDE=$DISCORD_INCLUDE" >> /root/antizapret/setup
-echo "CLOUDFLARE_INCLUDE=$CLOUDFLARE_INCLUDE" >> /root/antizapret/setup
-echo "TELEGRAM_INCLUDE=$TELEGRAM_INCLUDE" >> /root/antizapret/setup
-echo "WHATSAPP_INCLUDE=$WHATSAPP_INCLUDE" >> /root/antizapret/setup
-echo "ROBLOX_INCLUDE=$ROBLOX_INCLUDE" >> /root/antizapret/setup
-echo "AMAZON_INCLUDE=$AMAZON_INCLUDE" >> /root/antizapret/setup
-echo "HETZNER_INCLUDE=$HETZNER_INCLUDE" >> /root/antizapret/setup
-echo "DIGITALOCEAN_INCLUDE=$DIGITALOCEAN_INCLUDE" >> /root/antizapret/setup
-echo "OVH_INCLUDE=$OVH_INCLUDE" >> /root/antizapret/setup
-echo "GOOGLE_INCLUDE=$GOOGLE_INCLUDE" >> /root/antizapret/setup
-echo "AKAMAI_INCLUDE=$AKAMAI_INCLUDE" >> /root/antizapret/setup
 echo "CLEAR_HOSTS=$CLEAR_HOSTS" >> /root/antizapret/setup
 
 if ! [[ "$ANTIZAPRET_DNS" =~ ^[1-6]$ ]]; then

@@ -89,10 +89,6 @@ until [[ "$ANTIZAPRET_DNS" =~ ^[1-6]$ ]]; do
 	read -rp 'DNS choice [1-6]: ' -e -i 1 ANTIZAPRET_DNS
 done
 echo
-until [[ "$BLOCK_ADS" =~ (y|n) ]]; do
-	read -rp $'Enable blocking ads, trackers, malware and phishing websites in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002 (antizapret-*) based on AdGuard and OISD rules? [y/n]: ' -e -i y BLOCK_ADS
-done
-echo
 echo 'Default DNS  address:     10.77.77.77'
 echo 'Alternative DNS address: 172.77.77.77'
 until [[ "$ALTERNATIVE_IP" =~ (y|n) ]]; do
@@ -113,50 +109,6 @@ echo
 echo "Warning! Network attack and scan protection may block VPN or third-party applications!"
 until [[ "$ATTACK_PROTECTION" =~ (y|n) ]]; do
 	read -rp 'Enable network attack and scan protection? [y/n]: ' -e -i y ATTACK_PROTECTION
-done
-echo
-until [[ "$DISCORD_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Discord voice IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i y DISCORD_INCLUDE
-done
-echo
-until [[ "$CLOUDFLARE_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Cloudflare IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i y CLOUDFLARE_INCLUDE
-done
-echo
-until [[ "$TELEGRAM_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Telegram IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i y TELEGRAM_INCLUDE
-done
-echo
-until [[ "$WHATSAPP_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include WhatsApp IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i y WHATSAPP_INCLUDE
-done
-echo
-until [[ "$ROBLOX_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Roblox IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i y ROBLOX_INCLUDE
-done
-echo
-until [[ "$AMAZON_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Amazon IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i n AMAZON_INCLUDE
-done
-echo
-until [[ "$HETZNER_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Hetzner IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i n HETZNER_INCLUDE
-done
-echo
-until [[ "$DIGITALOCEAN_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include DigitalOcean IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i n DIGITALOCEAN_INCLUDE
-done
-echo
-until [[ "$OVH_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include OVH IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i n OVH_INCLUDE
-done
-echo
-until [[ "$GOOGLE_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Google IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i n GOOGLE_INCLUDE
-done
-echo
-until [[ "$AKAMAI_INCLUDE" =~ (y|n) ]]; do
-	read -rp $'Include Akamai IPs in \001\e[1;32m\002AntiZapret-Core\001\e[0m\002? [y/n]: ' -e -i n AKAMAI_INCLUDE
 done
 echo
 echo 'Installation, please wait...'
@@ -239,35 +191,21 @@ PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --force-reinstall --user /tmp
 rm -rf /tmp/antizapret
 git clone https://github.com/UtyaDev/AntiZapret-Core.git /tmp/antizapret
 
-# Сохраняем пользовательские настройки и обработчики custom*.sh
-cp /root/antizapret/config/*.txt /tmp/antizapret/setup/root/antizapret/config/ || true
-cp /root/antizapret/custom*.sh /tmp/antizapret/setup/root/antizapret/ || true
+# Сохраняем пользовательские настройки
+mkdir -p /tmp/antizapret/setup/root/antizapret/config/manual
+mkdir -p /tmp/antizapret/setup/root/antizapret/config/sources
+cp -r /root/antizapret/config/manual/* /tmp/antizapret/setup/root/antizapret/config/manual/ 2>/dev/null || true
+cp -r /root/antizapret/config/sources/* /tmp/antizapret/setup/root/antizapret/config/sources/ 2>/dev/null || true
 cp /etc/knot-resolver/*.lua /tmp/antizapret/setup/etc/knot-resolver/ || true
 
 # Сохраняем настройки
 echo "SETUP_DATE=$(date --iso-8601=seconds)
 ANTIZAPRET_DNS=$ANTIZAPRET_DNS
-BLOCK_ADS=$BLOCK_ADS
 ALTERNATIVE_IP=$ALTERNATIVE_IP
 ALTERNATIVE_FAKE_IP=$ALTERNATIVE_FAKE_IP
 SSH_PROTECTION=$SSH_PROTECTION
 ATTACK_PROTECTION=$ATTACK_PROTECTION
-DISCORD_INCLUDE=$DISCORD_INCLUDE
-CLOUDFLARE_INCLUDE=$CLOUDFLARE_INCLUDE
-TELEGRAM_INCLUDE=$TELEGRAM_INCLUDE
-WHATSAPP_INCLUDE=$WHATSAPP_INCLUDE
-ROBLOX_INCLUDE=$ROBLOX_INCLUDE
-AMAZON_INCLUDE=$AMAZON_INCLUDE
-HETZNER_INCLUDE=$HETZNER_INCLUDE
-DIGITALOCEAN_INCLUDE=$DIGITALOCEAN_INCLUDE
-OVH_INCLUDE=$OVH_INCLUDE
-GOOGLE_INCLUDE=$GOOGLE_INCLUDE
-AKAMAI_INCLUDE=$AKAMAI_INCLUDE
-CLEAR_HOSTS=y
-DEFAULT_INTERFACE=
-DEFAULT_IP=
-IP=
-FAKE_IP=" > /tmp/antizapret/setup/root/antizapret/setup
+CLEAR_HOSTS=y" > /tmp/antizapret/setup/root/antizapret/setup
 
 # Создаем папки для кэша Knot Resolver
 mkdir -p /var/cache/knot-resolver
