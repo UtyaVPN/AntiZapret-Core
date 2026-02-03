@@ -14,7 +14,7 @@ if [[ -n "$1" && "$1" != "ip" && "$1" != "ips" && "$1" != "host" && "$1" != "hos
 	set -- ""
 fi
 
-echo 'Update AntiZapret VPN files:'
+echo 'Update AntiZapret-Core files:'
 
 cd /root/antizapret
 
@@ -22,13 +22,13 @@ export LC_ALL=C
 
 rm -f download/*
 
-UPDATE_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/update.sh"
+UPDATE_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/update.sh"
 UPDATE_PATH="update.sh"
 
-PARSE_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/parse.sh"
+PARSE_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/parse.sh"
 PARSE_PATH="parse.sh"
 
-DOALL_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/doall.sh"
+DOALL_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/doall.sh"
 DOALL_PATH="doall.sh"
 
 DOMAIN_LINK="https://antifilter.download/list/domains.lst"
@@ -94,6 +94,21 @@ WHATSAPP_IPS_PATH="download/whatsapp-ips.txt"
 ROBLOX_IPS_LINK="https://raw.githubusercontent.com/GubernievS/AntiZapret-VPN/main/setup/root/antizapret/download/roblox-ips.txt"
 ROBLOX_IPS_PATH="download/roblox-ips.txt"
 
+CLOUDFLARE_IPS_V6_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/download/cloudflare-ips-v6.txt"
+CLOUDFLARE_IPS_V6_PATH="download/cloudflare-ips-v6.txt"
+
+GOOGLE_IPS_V6_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/download/google-ips-v6.txt"
+GOOGLE_IPS_V6_PATH="download/google-ips-v6.txt"
+
+AMAZON_IPS_V6_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/download/amazon-ips-v6.txt"
+AMAZON_IPS_V6_PATH="download/amazon-ips-v6.txt"
+
+TELEGRAM_IPS_V6_LINK="https://raw.githubusercontent.com/UtyaDev/AntiZapret-Core/main/setup/root/antizapret/download/telegram-ips-v6.txt"
+TELEGRAM_IPS_V6_PATH="download/telegram-ips-v6.txt"
+
+ANTIFILTER_IPS_V6_LINK="https://antifilter.network/download/ip6.lst"
+ANTIFILTER_IPS_V6_PATH="download/antifilter-ips-v6.txt"
+
 PROXY="https://api.codetabs.com/v1/proxy?quest="
 
 function download {
@@ -155,16 +170,19 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 fi
 
 if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "noclean" ]]; then
+	download $ANTIFILTER_IPS_V6_PATH $ANTIFILTER_IPS_V6_LINK
 	if [[ "$DISCORD_INCLUDE" = "y" ]]; then
 		download $DISCORD_IPS_PATH $DISCORD_IPS_LINK
 	fi
 
 	if [[ "$CLOUDFLARE_INCLUDE" = "y" ]]; then
 		download $CLOUDFLARE_IPS_PATH $CLOUDFLARE_IPS_LINK
+		download $CLOUDFLARE_IPS_V6_PATH $CLOUDFLARE_IPS_V6_LINK
 	fi
 
 	if [[ "$AMAZON_INCLUDE" = "y" ]]; then
 		download $AMAZON_IPS_PATH $AMAZON_IPS_LINK
+		download $AMAZON_IPS_V6_PATH $AMAZON_IPS_V6_LINK
 	fi
 
 	if [[ "$HETZNER_INCLUDE" = "y" ]]; then
@@ -181,10 +199,12 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 
 	if [[ "$TELEGRAM_INCLUDE" = "y" ]]; then
 		download $TELEGRAM_IPS_PATH $TELEGRAM_IPS_LINK
+		download $TELEGRAM_IPS_V6_PATH $TELEGRAM_IPS_V6_LINK
 	fi
 
 	if [[ "$GOOGLE_INCLUDE" = "y" ]]; then
 		download $GOOGLE_IPS_PATH $GOOGLE_IPS_LINK
+		download $GOOGLE_IPS_V6_PATH $GOOGLE_IPS_V6_LINK
 	fi
 
 	if [[ "$AKAMAI_INCLUDE" = "y" ]]; then
@@ -199,7 +219,5 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 		download $ROBLOX_IPS_PATH $ROBLOX_IPS_LINK
 	fi
 fi
-
-./custom-update.sh "$1" || true
 
 exit 0

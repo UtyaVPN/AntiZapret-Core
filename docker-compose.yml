@@ -1,0 +1,58 @@
+services:
+  antizapret:
+    build: .
+    image: utyadev/antizapret-core:latest
+    container_name: antizapret
+    restart: always
+    network_mode: host
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    volumes:
+      - ./config:/root/antizapret/config
+      - ./result:/root/antizapret/result
+    environment:
+      # 1) Cloudflare+Quad9+MSK-IX+SkyDNS(default)
+      # 2) SkyDNS
+      # 3) Cloudflare+Quad9
+      # 4) Comss
+      # 5) XBox
+      # 6) Malw
+      - ANTIZAPRET_DNS=1
+      # Enable blocking ads, trackers, malware and phishing websites (y/n)
+      - BLOCK_ADS=y
+      # Use alternative range of IP addresses? (y/n)
+      - ALTERNATIVE_IP=n
+      # Use alternative range of FAKE IP addresses? (y/n)
+      - ALTERNATIVE_FAKE_IP=y
+      # Include Discord voice IPs (y/n)
+      - DISCORD_INCLUDE=y
+      # Include Cloudflare IPs (y/n)
+      - CLOUDFLARE_INCLUDE=y
+      # Include Telegram IPs (y/n)
+      - TELEGRAM_INCLUDE=y
+      # Include WhatsApp IPs (y/n)
+      - WHATSAPP_INCLUDE=y
+      # Include Roblox IPs (y/n)
+      - ROBLOX_INCLUDE=y
+      # Include Amazon IPs (y/n)
+      - AMAZON_INCLUDE=n
+      # Include Hetzner IPs (y/n)
+      - HETZNER_INCLUDE=n
+      # Include DigitalOcean IPs (y/n)
+      - DIGITALOCEAN_INCLUDE=n
+      # Include OVH IPs (y/n)
+      - OVH_INCLUDE=n
+      # Include Google IPs (y/n)
+      - GOOGLE_INCLUDE=y
+      # Include Akamai IPs (y/n)
+      - AKAMAI_INCLUDE=n
+      # Clear hosts (y/n)
+      - CLEAR_HOSTS=y
+    healthcheck:
+      test: ["CMD-SHELL", "ss -lntu | grep -q 127.0.0.1:53 && ss -lntu | grep -q 127.0.0.2:53"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 70s

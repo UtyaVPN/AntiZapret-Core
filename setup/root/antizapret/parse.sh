@@ -2,11 +2,6 @@
 
 ###
 
-sed -i 's|, 10.30.0.0/15||g' /etc/wireguard/templates/antizapret-client-*.conf
-sed -i '/push "route 10.30.0.0 255.254.0.0"/d' /etc/openvpn/server/antizapret-*.conf
-
-###
-
 set -e
 shopt -s nullglob
 
@@ -23,7 +18,7 @@ if [[ -n "$1" && "$1" != "ip" && "$1" != "ips" && "$1" != "host" && "$1" != "hos
 	set -- ""
 fi
 
-echo 'Parse AntiZapret VPN files:'
+echo 'Parse AntiZapret-Core files:'
 
 export LC_ALL=C
 
@@ -54,54 +49,21 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 	# Выводим результат
 	echo "$(wc -l < result/route-ips.txt) - route-ips.txt"
 
+	# Обрабатываем конфигурационные файлы
+	sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*exclude-ips-v6.txt | sort -u > temp/exclude-ips-v6.txt
+	sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' download/*ips-v6.txt config/*include-ips-v6.txt | sort -u > temp/include-ips-v6.txt
+
+	# Убираем IPv6-адреса из исключений
+	comm -13 temp/exclude-ips-v6.txt temp/include-ips-v6.txt > temp/route-ips-v6.txt
+
+	# Обрабатываем конфигурационные файлы
+	awk -F'[/:]' '{print}' temp/route-ips-v6.txt > result/route-ips-v6.txt
+
+	# Выводим результат
+	echo "$(wc -l < result/route-ips-v6.txt) - route-ips-v6.txt"
+
 	[[ "$ALTERNATIVE_IP" == "y" ]] && IP="${IP:-172}" || IP="10"
 	[[ "$ALTERNATIVE_FAKE_IP" == "y" ]] && FAKE_IP="${FAKE_IP:-198.18}" || FAKE_IP="$IP.30"
-
-	# Создаем файл для OpenVPN и файлы маршрутов для роутеров
-	echo "push \"route $FAKE_IP.0.0 255.254.0.0\"" > result/DEFAULT
-	echo -e "route 0.0.0.0 128.0.0.0 net_gateway\nroute 128.0.0.0 128.0.0.0 net_gateway\nroute $IP.29.0.0 255.255.248.0\nroute $FAKE_IP.0.0 255.254.0.0" > result/tp-link-openvpn-routes.txt
-	echo -e "route ADD DNS_IP_1 MASK 255.255.255.255 $IP.29.8.1\nroute ADD DNS_IP_2 MASK 255.255.255.255 $IP.29.8.1\nroute ADD $FAKE_IP.0.0 MASK 255.254.0.0 $IP.29.8.1" > result/keenetic-wireguard-routes.txt
-	echo "/ip route add dst-address=$FAKE_IP.0.0/15 gateway=$IP.29.8.1 distance=1 comment=\"antizapret-wireguard\"" > result/mikrotik-wireguard-routes.txt
-	while read -r cidr; do
-		NET="$(echo $cidr | awk -F '/' '{print $1}')"
-		MASK="$(sipcalc -- $cidr | awk '/Network mask/ {print $4; exit;}')"
-		echo "push \"route $NET $MASK\"" >> result/DEFAULT
-		echo "route $NET $MASK" >> result/tp-link-openvpn-routes.txt
-		echo "route ADD $NET MASK $MASK $IP.29.8.1" >> result/keenetic-wireguard-routes.txt
-		echo "/ip route add dst-address=$cidr gateway=$IP.29.8.1 distance=1 comment=\"antizapret-wireguard\"" >> result/mikrotik-wireguard-routes.txt
-	done < result/route-ips.txt
-
-	# Обновляем файл DEFAULT в OpenVPN только если файл изменился
-	if [[ -f result/DEFAULT ]] && ! diff -q result/DEFAULT /etc/openvpn/server/ccd/DEFAULT; then
-		cp -f result/DEFAULT /etc/openvpn/server/ccd/DEFAULT
-	fi
-
-	# Создаем файл ips для WireGuard/AmneziaWG
-	echo -n ", $FAKE_IP.0.0/15" > result/ips
-	awk '{printf ", %s", $0}' result/route-ips.txt >> result/ips
-
-	# Обновляем файл ips в WireGuard/AmneziaWG только если файл изменился
-	if [[ -f result/ips ]] && ! diff -q result/ips /etc/wireguard/ips; then
-		cp -f result/ips /etc/wireguard/ips
-	fi
-
-	if [[ "$RESTRICT_FORWARD" == "y" ]]; then
-		# Обрабатываем конфигурационные файлы
-		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*forward-ips.txt temp/route-ips.txt | sort -u \
-		| awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' > result/forward-ips.txt
-
-		# Выводим результат
-		echo "$(wc -l < result/forward-ips.txt) - forward-ips.txt"
-
-		# Обновляем ipset antizapret-forward
-		{
-			echo 'create antizapret-forward hash:net -exist'
-			echo 'flush antizapret-forward'
-			while read -r cidr; do
-				echo "add antizapret-forward $cidr -exist"
-			done < result/forward-ips.txt
-		} | ipset restore
-	fi
 
 	if [[ "$ATTACK_PROTECTION" == "y" ]]; then
 		# Обрабатываем конфигурационные файлы
@@ -118,6 +80,22 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 			while read -r cidr; do
 				echo "add antizapret-allow $cidr -exist"
 			done < result/allow-ips.txt
+		} | ipset restore
+
+		# Обрабатываем конфигурационные файлы
+		sed -E 's/[\r[:space:]]+//g; /^[[:punct:]]/d; /^$/d' config/*allow-ips-v6.txt | sort -u \
+		| awk -F'[/:]' '{print}' > result/allow-ips-v6.txt
+		
+		# Выводим результат
+		echo "$(wc -l < result/allow-ips-v6.txt) - allow-ips-v6.txt"
+
+		# Обновляем ipset antizapret-allow-v6
+		{
+			echo 'create antizapret-allow-v6 hash:net family inet6 -exist'
+			echo 'flush antizapret-allow-v6'
+			while read -r cidr; do
+				echo "add antizapret-allow-v6 $cidr -exist"
+			done < result/allow-ips-v6.txt
 		} | ipset restore
 	fi
 fi
@@ -188,13 +166,8 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 	comm -13 temp/remove-hosts.txt temp/include-hosts2.txt > temp/include-hosts3.txt
 	comm -13 temp/remove-hosts.txt temp/exclude-hosts.txt > result/exclude-hosts.txt
 
-	# Удаляем избыточные поддомены
-	if [[ "$ROUTE_ALL" = "y" ]]; then
-		sed -E '/\..*\./ s/^([0-9]*www[0-9]*|hd[0-9]*|[A-Za-z]|[0-9]+)\.//' temp/include-hosts3.txt > temp/include-hosts4.txt
-	else
-		# Добавляем исключённые домены для дальнейшего удаления избыточных доменов
-		sed -E '/\..*\./ s/^([0-9]*www[0-9]*|hd[0-9]*|[A-Za-z]|[0-9]+)\.//' temp/include-hosts3.txt result/exclude-hosts.txt > temp/include-hosts4.txt
-	fi
+	# Добавляем исключённые домены для дальнейшего удаления избыточных доменов
+	sed -E '/\..*\./ s/^([0-9]*www[0-9]*|hd[0-9]*|[A-Za-z]|[0-9]+)\.//' temp/include-hosts3.txt result/exclude-hosts.txt > temp/include-hosts4.txt
 
 	# Удаляем избыточные домены
 	rev temp/include-hosts4.txt | \
@@ -208,13 +181,8 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 		print $0
 	}' | rev | sort -u > temp/include-hosts5.txt
 
-	if [[ "$ROUTE_ALL" = "y" ]]; then
-		# Пустим все домены через AntiZapret VPN
-		sed '1i.' temp/include-hosts5.txt > result/include-hosts.txt
-	else
-		# Удаляем исключённые домены
-		comm -23 temp/include-hosts5.txt result/exclude-hosts.txt > result/include-hosts.txt
-	fi
+	# Удаляем исключённые домены
+	comm -23 temp/include-hosts5.txt result/exclude-hosts.txt > result/include-hosts.txt
 
 	# Выводим результат
 	echo "$(wc -l < result/include-hosts.txt) - include-hosts.txt"
@@ -230,14 +198,7 @@ if [[ -z "$1" || "$1" == "host" || "$1" == "hosts" || "$1" == "noclear" || "$1" 
 		cp -f result/proxy.rpz /etc/knot-resolver/proxy.rpz.tmp
 		mv -f /etc/knot-resolver/proxy.rpz.tmp /etc/knot-resolver/proxy.rpz
 		sleep 5
-		if [[ "$1" != "noclear" && "$1" != "noclean" ]]; then
-			# Очищаем кэш Knot Resolver
-			count="$(echo 'cache.clear()' | socat - /run/knot-resolver/control/1 | grep -oE '[0-9]+' || echo 0)"
-			echo "DNS cache cleared: $count entries"
-		fi
 	fi
 fi
-
-./custom-parse.sh "$1" || true
 
 exit 0
