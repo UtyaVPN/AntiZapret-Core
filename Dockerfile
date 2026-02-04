@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    curl gpg git iptables gawk idn sipcalc python3-pip diffutils \
+    curl gpg iptables gawk idn sipcalc python3-pip diffutils \
     socat lua-cqueues ipset lsb-release ca-certificates cron kmod \
     iproute2 procps && \
     curl -fsSL https://pkg.labs.nic.cz/gpg -o /etc/apt/keyrings/cznic-labs-pkg.gpg && \
@@ -14,6 +14,7 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install -y --no-install-recommends knot-resolver && \
     PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir dnslib && \
+    apt-get purge -y gpg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

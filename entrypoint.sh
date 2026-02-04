@@ -32,6 +32,7 @@ log "Generating AntiZapret setup file..."
     echo "SSH_PROTECTION=$SSH_PROTECTION"
     echo "ATTACK_PROTECTION=$ATTACK_PROTECTION"
     echo "CLEAR_HOSTS=$CLEAR_HOSTS"
+    echo "ROUTE_AGGREGATION_LIMIT=${ROUTE_AGGREGATION_LIMIT}"
 } > /root/antizapret/setup
 
 chmod +x /root/antizapret/*.sh

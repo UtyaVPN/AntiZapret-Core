@@ -20,6 +20,7 @@ class ProxyResolver(BaseResolver):
         try:
             self.ip_pool_v6 = deque([str(x) for x in IPv6Network(ip_range_v6).hosts()])
             self.ip_map_v6 = {}
+            print(f"IPv6 pool size: {len(self.ip_pool_v6)}")
         except Exception as e:
             print(f"Error initializing IPv6 pool with {ip_range_v6}: {e}")
             sys.exit(1)
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     
     base = "172" if alt_ip == "y" else "10"
     ip_v4 = "198.18.0.0/15" if alt_fake == "y" else f"{base}.30.0.0/15"
-    ip_v6 = "fd00:18::/112"
+    ip_v6 = "fd00:18::/111"
 
     p = argparse.ArgumentParser(description="DNS Proxy")
     p.add_argument("--port", type=int, default=53, metavar="<port>")

@@ -36,16 +36,28 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
 
     # Remove excluded IPv4
     comm -13 temp/exclude-ips.txt temp/include-ips.txt > temp/route-ips-v4.txt || true
-    # Validate IPv4 CIDR and aggregate to 300 routes
-    [[ $(wc -l < temp/route-ips-v4.txt) -gt 300 ]] && echo "Aggregating IPv4 routes..."
-    awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' temp/route-ips-v4.txt | sort -u | ./aggregate.py 300 > result/route-ips.txt || true
+    # Validate IPv4 CIDR and aggregate if limit is set
+    VALID_IPV4=$(awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' temp/route-ips-v4.txt | sort -u)
+    if [[ "$ROUTE_AGGREGATION_LIMIT" =~ ^[0-9]+$ ]] && [[ "$ROUTE_AGGREGATION_LIMIT" -gt 0 ]]; then
+        echo "Aggregating IPv4 routes to $ROUTE_AGGREGATION_LIMIT..."
+        echo "$VALID_IPV4" | ./aggregate.py "$ROUTE_AGGREGATION_LIMIT" > result/route-ips.txt || true
+    else
+        echo "Route aggregation is disabled (IPv4)"
+        echo "$VALID_IPV4" > result/route-ips.txt || true
+    fi
     echo "$(wc -l < result/route-ips.txt) - route-ips.txt"
 
     # Remove excluded IPv6
     comm -13 temp/exclude-ips-v6.txt temp/include-ips-v6.txt > temp/route-ips-v6-raw.txt || true
-    # Pre-filter IPv6 to /64 and aggregate to 300 routes
-    [[ $(wc -l < temp/route-ips-v6-raw.txt) -gt 300 ]] && echo "Aggregating IPv6 routes..."
-    grep ':' temp/route-ips-v6-raw.txt | cut -d: -f1-4 | sort -u | sed 's/$/::\/64/' | ./aggregate.py 300 > result/route-ips-v6.txt || true
+    # Pre-filter IPv6 to /64 and aggregate if limit is set
+    VALID_IPV6=$(grep ':' temp/route-ips-v6-raw.txt | cut -d: -f1-4 | sort -u | sed 's/$/::\/64/')
+    if [[ "$ROUTE_AGGREGATION_LIMIT" =~ ^[0-9]+$ ]] && [[ "$ROUTE_AGGREGATION_LIMIT" -gt 0 ]]; then
+        echo "Aggregating IPv6 routes to $ROUTE_AGGREGATION_LIMIT..."
+        echo "$VALID_IPV6" | ./aggregate.py "$ROUTE_AGGREGATION_LIMIT" > result/route-ips-v6.txt || true
+    else
+        echo "Route aggregation is disabled (IPv6)"
+        echo "$VALID_IPV6" > result/route-ips-v6.txt || true
+    fi
     echo "$(wc -l < result/route-ips-v6.txt) - route-ips-v6.txt"
 
     if [[ "$ATTACK_PROTECTION" == "y" ]]; then

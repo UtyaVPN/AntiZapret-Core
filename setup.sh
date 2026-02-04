@@ -107,6 +107,13 @@ until [[ "$ATTACK_PROTECTION" =~ (y|n) ]]; do
     read -rp 'Enable network attack and scan protection? [y/n]: ' -e -i y ATTACK_PROTECTION
 done
 
+echo
+echo "Route aggregation reduces the number of routes for hardware routers compatibility."
+echo "Enter the maximum number of routes (e.g., 300). Enter 0 to disable aggregation."
+until [[ "$ROUTE_AGGREGATION_LIMIT" =~ ^[0-9]+$ ]]; do
+    read -rp 'Route aggregation limit: ' -e -i 300 ROUTE_AGGREGATION_LIMIT
+done
+
 echo -e '\nInstallation, please wait...'
 
 while pidof apt-get &>/dev/null; do
@@ -174,7 +181,8 @@ ALTERNATIVE_IP=$ALTERNATIVE_IP
 ALTERNATIVE_FAKE_IP=$ALTERNATIVE_FAKE_IP
 SSH_PROTECTION=$SSH_PROTECTION
 ATTACK_PROTECTION=$ATTACK_PROTECTION
-CLEAR_HOSTS=y" > /tmp/antizapret/setup/root/antizapret/setup
+CLEAR_HOSTS=y
+ROUTE_AGGREGATION_LIMIT=$ROUTE_AGGREGATION_LIMIT" > /tmp/antizapret/setup/root/antizapret/setup
 
 mkdir -p /var/cache/knot-resolver /var/cache/knot-resolver2
 chown -R knot-resolver:knot-resolver /var/cache/knot-resolver /var/cache/knot-resolver2

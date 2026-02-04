@@ -23,11 +23,13 @@ services:
       # Use alternative range of IP addresses? (y/n)
       - ALTERNATIVE_IP=n
       # Use alternative range of FAKE IP addresses? (y/n)
-      - ALTERNATIVE_FAKE_IP=y
+      - ALTERNATIVE_FAKE_IP=n
       # Enable SSH brute-force protection? (y/n)
       - SSH_PROTECTION=y
       # Enable network attack and scan protection? (y/n)
       - ATTACK_PROTECTION=y
+      # Route aggregation limit (number of routes). 0 to disable.
+      - ROUTE_AGGREGATION_LIMIT=300
       # Clear hosts from gambling and betting websites (y/n)
       - CLEAR_HOSTS=y
     healthcheck:
