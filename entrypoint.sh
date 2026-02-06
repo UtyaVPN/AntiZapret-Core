@@ -20,7 +20,7 @@ fi
 if [ ! -d "/root/antizapret/config/manual" ] || [ ! -d "/root/antizapret/config/sources" ]; then
     log "Initializing config directory structure..."
     mkdir -p /root/antizapret/config/manual /root/antizapret/config/sources
-    cp -rn /root/antizapret/config_default/* /root/antizapret/config/
+    cp -r --update=none /root/antizapret/config_default/* /root/antizapret/config/
 fi
 
 log "Generating AntiZapret setup file..."
