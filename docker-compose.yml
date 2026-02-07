@@ -29,7 +29,7 @@ services:
       # Enable network attack and scan protection? (y/n)
       - ATTACK_PROTECTION=y
       # Route aggregation limit (number of routes). 0 to disable.
-      - ROUTE_AGGREGATION_LIMIT=300
+      - ROUTE_AGGREGATION_LIMIT=500
       # Clear hosts from gambling and betting websites (y/n)
       - CLEAR_HOSTS=y
     healthcheck:

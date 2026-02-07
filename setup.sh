@@ -109,9 +109,9 @@ done
 
 echo
 echo "Route aggregation reduces the number of routes for hardware routers compatibility."
-echo "Enter the maximum number of routes (e.g., 300). Enter 0 to disable aggregation."
+echo "Enter the maximum number of routes (e.g., 500). Enter 0 to disable aggregation."
 until [[ "$ROUTE_AGGREGATION_LIMIT" =~ ^[0-9]+$ ]]; do
-    read -rp 'Route aggregation limit: ' -e -i 300 ROUTE_AGGREGATION_LIMIT
+    read -rp 'Route aggregation limit: ' -e -i 500 ROUTE_AGGREGATION_LIMIT
 done
 
 echo -e '\nInstallation, please wait...'
@@ -165,9 +165,8 @@ apt-get autoremove --purge -y
 apt-get clean
 dpkg-reconfigure -f noninteractive unattended-upgrades
 
-rm -rf /tmp/dnslib /tmp/antizapret
-git clone https://github.com/paulc/dnslib.git /tmp/dnslib
-PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --force-reinstall --user /tmp/dnslib
+rm -rf /tmp/antizapret
+PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --user dnslib py-radix
 git clone https://github.com/UtyaDev/AntiZapret-Core.git /tmp/antizapret
 
 mkdir -p /tmp/antizapret/setup/root/antizapret/config/{manual,sources}

@@ -56,8 +56,11 @@ ip6tables -w -D INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -m hashlimit
 
 # mangle
 # Clamp TCP MSS
-iptables -w -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
-ip6tables -w -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+iptables -t mangle -D OUTPUT -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+iptables -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+ip6tables -t mangle -D OUTPUT -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+ip6tables -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+
 
 # raw
 # NOTRACK loopback
@@ -71,5 +74,9 @@ iptables -w -t nat -F ANTIZAPRET-MAPPING
 iptables -w -t nat -X ANTIZAPRET-MAPPING
 ip6tables -w -t nat -F ANTIZAPRET-MAPPING
 ip6tables -w -t nat -X ANTIZAPRET-MAPPING
+
+# Remove OUTPUT rules sending traffic to ANTIZAPRET-MAPPING
+iptables -w -t nat -D OUTPUT -d 198.18.0.0/15 -j ANTIZAPRET-MAPPING 2>/dev/null
+ip6tables -w -t nat -D OUTPUT -d fd00:18::/112 -j ANTIZAPRET-MAPPING 2>/dev/null
 
 exit 0

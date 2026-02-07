@@ -13,7 +13,7 @@ RUN apt-get update && \
     echo "deb [signed-by=/etc/apt/keyrings/cznic-labs-pkg.gpg] https://pkg.labs.nic.cz/knot-resolver $(lsb_release -cs) main" > /etc/apt/sources.list.d/cznic-labs-knot-resolver.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends knot-resolver && \
-    PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir dnslib && \
+    PIP_BREAK_SYSTEM_PACKAGES=1 python3 -m pip install --no-cache-dir dnslib py-radix && \
     apt-get purge -y gpg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

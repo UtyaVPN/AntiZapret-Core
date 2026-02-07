@@ -84,8 +84,11 @@ if [[ "$SSH_PROTECTION" == "y" ]]; then
 fi
 
 # Clamp TCP MSS
-iptables -w -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
-ip6tables -w -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+iptables -t mangle -A OUTPUT  -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+ip6tables -t mangle -A OUTPUT  -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+ip6tables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+
 
 # NOTRACK loopback
 iptables -w -t raw -A PREROUTING -i lo -j NOTRACK
@@ -96,5 +99,9 @@ ip6tables -w -t raw -A OUTPUT -o lo -j NOTRACK
 # Mapping fake IP to real IP
 iptables -w -t nat -S ANTIZAPRET-MAPPING &>/dev/null || iptables -w -t nat -N ANTIZAPRET-MAPPING
 ip6tables -w -t nat -S ANTIZAPRET-MAPPING &>/dev/null || ip6tables -w -t nat -N ANTIZAPRET-MAPPING
+
+# Route all outgoing host traffic through ANTIZAPRET-MAPPING
+iptables -t nat -A OUTPUT -d 198.18.0.0/15 -j ANTIZAPRET-MAPPING
+ip6tables -t nat -A OUTPUT -d fd00:18::/112 -j ANTIZAPRET-MAPPING
 
 exit 0

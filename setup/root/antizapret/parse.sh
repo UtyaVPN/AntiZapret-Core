@@ -40,7 +40,7 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
     VALID_IPV4=$(awk -F'[/.]' 'NF==5 && $1>=0 && $1<=255 && $2>=0 && $2<=255 && $3>=0 && $3<=255 && $4>=0 && $4<=255 && $5>=1 && $5<=32 {print}' temp/route-ips-v4.txt | sort -u)
     if [[ "$ROUTE_AGGREGATION_LIMIT" =~ ^[0-9]+$ ]] && [[ "$ROUTE_AGGREGATION_LIMIT" -gt 0 ]]; then
         echo "Aggregating IPv4 routes to $ROUTE_AGGREGATION_LIMIT..."
-        echo "$VALID_IPV4" | ./aggregate.py "$ROUTE_AGGREGATION_LIMIT" > result/route-ips.txt || true
+        echo "$VALID_IPV4" | ./aggregate.py "$ROUTE_AGGREGATION_LIMIT" "result/route-ips.txt" || true
     else
         echo "Route aggregation is disabled (IPv4)"
         echo "$VALID_IPV4" > result/route-ips.txt || true
@@ -53,7 +53,7 @@ if [[ -z "$1" || "$1" == "ip" || "$1" == "ips" || "$1" == "noclear" || "$1" == "
     VALID_IPV6=$(grep ':' temp/route-ips-v6-raw.txt | cut -d: -f1-4 | sort -u | sed 's/$/::\/64/')
     if [[ "$ROUTE_AGGREGATION_LIMIT" =~ ^[0-9]+$ ]] && [[ "$ROUTE_AGGREGATION_LIMIT" -gt 0 ]]; then
         echo "Aggregating IPv6 routes to $ROUTE_AGGREGATION_LIMIT..."
-        echo "$VALID_IPV6" | ./aggregate.py "$ROUTE_AGGREGATION_LIMIT" > result/route-ips-v6.txt || true
+        echo "$VALID_IPV6" | ./aggregate.py "$ROUTE_AGGREGATION_LIMIT" "result/route-ips-v6.txt" || true
     else
         echo "Route aggregation is disabled (IPv6)"
         echo "$VALID_IPV6" > result/route-ips-v6.txt || true
